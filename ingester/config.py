@@ -5,9 +5,10 @@ GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
 GITHUB_API_BASE = "https://api.github.com"
 
 # Repos to mine for workflow run history + ground-truth flaky labels.
-# Start with one repo while developing, expand once the pipeline works.
+# The seed repo (replace YOUR_USERNAME) gives guaranteed positive examples
+# even before real-world mining from the large repos below finds enough
+# naturally-occurring flaky cases.
 TARGET_REPOS = [
-    "apache/kafka",
     "elastic/elasticsearch",
 ]
 
@@ -15,9 +16,11 @@ TARGET_REPOS = [
 # Different repos use different conventions — adjust per repo as needed.
 FLAKY_LABELS = ["flaky-test", "flaky", "test-flakiness"]
 
-# How many workflow runs to pull per repo (start small to respect rate limits
-# on an unauthenticated/low-quota token; raise once you have a real PAT).
-MAX_RUNS_PER_REPO = 200
+# How many workflow runs to pull per repo. Raised to increase the chance of
+# catching commits that got CI-rerun (the source of "reran_commits" evidence
+# the detector needs). This will take notably longer to run for large repos
+# -- expect tens of minutes for apache/kafka at this size.
+MAX_RUNS_PER_REPO = 2000
 
 REQUEST_HEADERS = {
     "Accept": "application/vnd.github+json",

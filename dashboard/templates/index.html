@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FlakyGuard Dashboard</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+           background: #0f1117; color: #e2e8f0; min-height: 100vh; }
+    nav { background: #1a1d27; border-bottom: 1px solid #2d3748; padding: 1rem 2rem;
+          display: flex; align-items: center; gap: 2rem; }
+    nav h1 { font-size: 1.25rem; font-weight: 700; color: #63b3ed; }
+    nav a { color: #a0aec0; text-decoration: none; font-size: 0.9rem; }
+    nav a:hover, nav a.active { color: #63b3ed; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem; }
+    .stat-card { background: #1a1d27; border: 1px solid #2d3748; border-radius: 8px;
+                 padding: 1.5rem; text-align: center; }
+    .stat-card .number { font-size: 2rem; font-weight: 700; color: #63b3ed; }
+    .stat-card .label { font-size: 0.85rem; color: #718096; margin-top: 0.25rem; }
+    .section { background: #1a1d27; border: 1px solid #2d3748; border-radius: 8px;
+               padding: 1.5rem; margin-bottom: 1.5rem; }
+    .section h2 { font-size: 1rem; font-weight: 600; margin-bottom: 1rem;
+                  color: #e2e8f0; border-bottom: 1px solid #2d3748; padding-bottom: 0.75rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th { text-align: left; padding: 0.5rem 0.75rem; color: #718096;
+         border-bottom: 1px solid #2d3748; font-weight: 500; }
+    td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #1e2130; }
+    tr:hover td { background: #1e2130; }
+    .badge { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 4px;
+             font-size: 0.75rem; font-weight: 600; }
+    .badge-red { background: #742a2a; color: #fc8181; }
+    .badge-yellow { background: #744210; color: #f6e05e; }
+    .badge-green { background: #1c4532; color: #68d391; }
+    .badge-gray { background: #2d3748; color: #a0aec0; }
+    .score-bar-wrap { display: flex; align-items: center; gap: 0.5rem; }
+    .score-bar { height: 6px; border-radius: 3px; background: #2d3748; flex: 1; }
+    .score-fill { height: 100%; border-radius: 3px; background: #63b3ed; }
+    .empty { color: #4a5568; font-size: 0.85rem; padding: 1rem 0; }
+    .test-name { font-family: monospace; font-size: 0.8rem; color: #90cdf4; }
+    .classname { font-family: monospace; font-size: 0.75rem; color: #718096; }
+  </style>
+</head>
+<body>
+  <nav>
+    <h1>🛡️ FlakyGuard</h1>
+    <a href="/" class="active">Dashboard</a>
+    <a href="/ml">ML Comparison</a>
+    <a href="/bisect">Bisector</a>
+  </nav>
+
+  <div class="container">
+    <div class="stats">
+      <div class="stat-card">
+        <div class="number">{{ total_tests }}</div>
+        <div class="label">Total unique tests observed</div>
+      </div>
+      <div class="stat-card">
+        <div class="number" style="color: #fc8181;">{{ flagged|length }}</div>
+        <div class="label">Flagged as likely flaky</div>
+      </div>
+      <div class="stat-card">
+        <div class="number" style="color: #f6e05e;">{{ threshold }}</div>
+        <div class="label">Flakiness score threshold</div>
+      </div>
+    </div>
+
+    <!-- Quarantine list: tests above threshold -->
+    <div class="section">
+      <h2>🚨 Quarantine List — Likely Flaky Tests (score ≥ {{ threshold }})</h2>
+      {% if flagged %}
+      <table>
+        <thead>
+          <tr>
+            <th>Test</th>
+            <th>Class</th>
+            <th>Score</th>
+            <th>Fail rate</th>
+            <th>Same-commit inconsistency</th>
+            <th>Runs</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in flagged %}
+          <tr>
+            <td class="test-name">{{ r.test_name }}</td>
+            <td class="classname">{{ r.classname }}</td>
+            <td>
+              <div class="score-bar-wrap">
+                <div class="score-bar">
+                  <div class="score-fill" style="width: {{ (r.flakiness_score|float * 100)|int }}%"></div>
+                </div>
+                <span>{{ "%.2f"|format(r.flakiness_score|float) }}</span>
+              </div>
+            </td>
+            <td>
+              {% set fr = r.fail_rate|float %}
+              {% if fr > 0.1 %}
+                <span class="badge badge-red">{{ "%.0f"|format(fr * 100) }}%</span>
+              {% else %}
+                <span class="badge badge-gray">{{ "%.0f"|format(fr * 100) }}%</span>
+              {% endif %}
+            </td>
+            <td>{{ "%.2f"|format(r.same_commit_inconsistency|float) }}</td>
+            <td>{{ r.total_runs }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="empty">No tests currently flagged above the threshold.
+        Try triggering more seed-repo runs or expanding the data pull.</p>
+      {% endif %}
+    </div>
+
+    <!-- All tests ranked -->
+    <div class="section">
+      <h2>📊 All Tests — Ranked by Flakiness Score (top 50)</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Test</th>
+            <th>Score</th>
+            <th>Evidence</th>
+            <th>Fail rate</th>
+            <th>Runs</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in all_scores %}
+          <tr>
+            <td>
+              <div class="test-name">{{ r.test_name }}</div>
+              <div class="classname">{{ r.classname }}</div>
+            </td>
+            <td>{{ "%.3f"|format(r.flakiness_score|float) }}</td>
+            <td>
+              {% if r.evidence_level == "rerun_observed" %}
+                <span class="badge badge-green">rerun observed</span>
+              {% else %}
+                <span class="badge badge-gray">insufficient</span>
+              {% endif %}
+            </td>
+            <td>{{ "%.0f"|format(r.fail_rate|float * 100) }}%</td>
+            <td>{{ r.total_runs }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</body>
+</html>

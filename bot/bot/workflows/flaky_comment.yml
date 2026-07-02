@@ -1,0 +1,65 @@
+name: FlakyGuard PR Check
+
+on:
+  pull_request:
+  workflow_run:
+    workflows: ["Run Tests"]
+    types: [completed]
+
+jobs:
+  flaky-check:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write  # needed to post PR comments
+      contents: read
+
+    steps:
+      - name: Checkout FlakyGuard
+        uses: actions/checkout@v4
+        with:
+          repository: sabahat-tech/flaky-guard
+          path: flaky-guard
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install FlakyGuard dependencies
+        run: pip install requests pandas scikit-learn
+
+      - name: Run FlakyGuard ingester (pull recent CI history)
+        working-directory: flaky-guard
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python -m ingester.build_dataset
+        continue-on-error: true  # don't block PR if ingestion fails
+
+      - name: Run FlakyGuard detector (score tests)
+        working-directory: flaky-guard
+        run: |
+          python -m detector.scorer data/test_results.csv --top 100
+        continue-on-error: true
+
+      - name: Get failing tests from this run
+        id: failing
+        run: |
+          # In a real deployment, parse the JUnit XML from the current run.
+          # For this template, we read the FAILED_TESTS env var if set,
+          # or fall back to an empty list (safe -- bot only comments when
+          # there are actual matches, never on a clean run).
+          echo "tests=${FAILED_TESTS:-}" >> $GITHUB_OUTPUT
+
+      - name: Post PR comment if flaky failures found
+        working-directory: flaky-guard
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python -m bot.pr_commenter \
+            --repo ${{ github.repository }} \
+            --pr ${{ github.event.pull_request.number || github.event.workflow_run.pull_requests[0].number }} \
+            --scores data/test_results_flakiness_scores.csv \
+            --failed-tests "${{ steps.failing.outputs.tests }}" \
+            --run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        continue-on-error: true
