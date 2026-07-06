@@ -1,0 +1,5 @@
+classname,test_name,total_runs,distinct_commits,reran_commits,fail_rate,same_commit_inconsistency,duration_cv,ml_flakiness_score
+tests.test_flaky_demo,test_truly_flaky,15,1,1,0.2,1.0,3.873,0.96
+tests.test_flaky_demo,test_stable_fail,15,1,1,1.0,0.0,0.406,0.20
+tests.test_flaky_demo,test_stable_pass,15,1,1,0.0,0.0,3.873,0.18
+tests.test_flaky_demo,test_noisy_but_stable,15,1,1,0.0,0.0,0.485,0.08

@@ -1,5 +1,7 @@
-data/
+data/*.pkl
+data/artifacts/
+data/test_results.csv
+data/comparison_report.csv
 __pycache__/
 *.pyc
-*.pkl
 venv/

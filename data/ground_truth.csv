@@ -1,0 +1,5 @@
+classname,test_name,is_flaky
+tests.test_flaky_demo,test_truly_flaky,1
+tests.test_flaky_demo,test_stable_pass,0
+tests.test_flaky_demo,test_stable_fail,0
+tests.test_flaky_demo,test_noisy_but_stable,0

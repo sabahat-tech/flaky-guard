@@ -1,0 +1,26 @@
+[
+  {
+    "repo_path": "C:\\Users\\ASUS\\Downloads\\bisect-test-repo",
+    "good_sha": "55d9e11",
+    "bad_sha": "d7ecc80",
+    "culprit": "b0d67c8e",
+    "commits_checked": 3,
+    "steps": [
+      {
+        "commit": "b0d67c8e",
+        "outcome": "fail",
+        "output": "F                                                                        [100%]\n================================== FAILURES ===================================\n__________________________________ test_add ___________________________________\n\n    def test_add():\n>       assert add(2, 3) == 5\nE       assert 6 == 5\nE        +  where 6 = add(2, 3)\n\ntest_calc.py:3: AssertionError\n=========================== short test summary info ===========================\nFAILED test_calc.py::test_add - assert 6 =="
+      },
+      {
+        "commit": "fc1f4977",
+        "outcome": "pass",
+        "output": ".                                                                        [100%]\n1 passed in 0.02s\n"
+      },
+      {
+        "commit": "c837f93f",
+        "outcome": "pass",
+        "output": ".                                                                        [100%]\n1 passed in 0.02s\n"
+      }
+    ]
+  }
+]

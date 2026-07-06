@@ -1,0 +1,5 @@
+classname,test_name,total_runs,distinct_commits,reran_commits,fail_rate,same_commit_inconsistency,duration_cv,fail_rate_suspicion,duration_signal,evidence_level,flakiness_score
+tests.test_flaky_demo,test_truly_flaky,15,1,1,0.2,1.0,3.873,0.6,0.5,rerun_observed,0.92
+tests.test_flaky_demo,test_noisy_but_stable,15,1,1,0.0,0.0,0.485,0.0,0.2425,rerun_observed,0.0
+tests.test_flaky_demo,test_stable_fail,15,1,1,1.0,0.0,0.406,0.0,0.203,rerun_observed,0.0
+tests.test_flaky_demo,test_stable_pass,15,1,1,0.0,0.0,3.873,0.0,0.5,rerun_observed,0.0

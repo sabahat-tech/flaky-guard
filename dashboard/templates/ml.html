@@ -1,15 +1,15 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FlakyGuard — ML Comparison</title>
+  <title>FlakyGuard â€” ML Comparison</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
            background: #0f1117; color: #e2e8f0; min-height: 100vh; }
     nav { background: #1a1d27; border-bottom: 1px solid #2d3748; padding: 1rem 2rem;
-          display: flex; align-items: center; gap: 2rem; }
+          display: flex; align-items: center; gap: 2rem; flex-wrap: wrap; }
     nav h1 { font-size: 1.25rem; font-weight: 700; color: #63b3ed; }
     nav a { color: #a0aec0; text-decoration: none; font-size: 0.9rem; }
     nav a:hover, nav a.active { color: #63b3ed; }
@@ -20,61 +20,94 @@
     .stat-card .number { font-size: 1.75rem; font-weight: 700; color: #63b3ed; }
     .stat-card .label { font-size: 0.8rem; color: #718096; margin-top: 0.25rem; }
     .section { background: #1a1d27; border: 1px solid #2d3748; border-radius: 8px;
-               padding: 1.5rem; margin-bottom: 1.5rem; }
+               padding: 1.5rem; margin-bottom: 1.5rem; overflow-x: auto; }
     .section h2 { font-size: 1rem; font-weight: 600; margin-bottom: 1rem;
                   color: #e2e8f0; border-bottom: 1px solid #2d3748; padding-bottom: 0.75rem; }
-    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
-    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; min-width: 480px; }
     th { text-align: left; padding: 0.5rem 0.75rem; color: #718096;
-         border-bottom: 1px solid #2d3748; font-weight: 500; }
+         border-bottom: 1px solid #2d3748; font-weight: 500; white-space: nowrap; }
     td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #1e2130; }
     tr:hover td { background: #1e2130; }
     .badge { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 4px;
-             font-size: 0.75rem; font-weight: 600; }
+             font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
     .badge-red { background: #742a2a; color: #fc8181; }
     .badge-green { background: #1c4532; color: #68d391; }
     .badge-gray { background: #2d3748; color: #a0aec0; }
-    .badge-blue { background: #1a365d; color: #90cdf4; }
     .badge-agree { background: #1c4532; color: #68d391; }
     .badge-disagree { background: #742a2a; color: #fc8181; }
-    .score-wrap { display: flex; align-items: center; gap: 0.5rem; min-width: 120px; }
+    .score-wrap { display: flex; align-items: center; gap: 0.5rem; min-width: 100px; }
     .score-bar { height: 6px; border-radius: 3px; background: #2d3748; flex: 1; }
     .score-fill-h { height: 100%; border-radius: 3px; background: #63b3ed; }
     .score-fill-ml { height: 100%; border-radius: 3px; background: #9f7aea; }
-    .test-name { font-family: monospace; font-size: 0.8rem; color: #90cdf4; }
-    .classname { font-family: monospace; font-size: 0.75rem; color: #718096; }
+    .test-name { font-family: monospace; font-size: 0.8rem; color: #90cdf4; word-break: break-all; }
+    .classname { font-family: monospace; font-size: 0.75rem; color: #718096; word-break: break-all; }
     .finding-box { background: #1a2744; border: 1px solid #2b4c8c; border-radius: 8px;
                    padding: 1.25rem; margin-bottom: 1rem; }
     .finding-box h3 { color: #90cdf4; font-size: 0.9rem; margin-bottom: 0.5rem; }
     .finding-box p { color: #a0aec0; font-size: 0.85rem; line-height: 1.6; }
     .feat-row { display: flex; align-items: center; gap: 0.75rem;
-                padding: 0.5rem 0; border-bottom: 1px solid #1e2130; }
-    .feat-name { font-family: monospace; font-size: 0.8rem; color: #e2e8f0; width: 200px; flex-shrink: 0; }
-    .feat-bars { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+                padding: 0.5rem 0; border-bottom: 1px solid #1e2130; flex-wrap: wrap; }
+    .feat-name { font-family: monospace; font-size: 0.8rem; color: #e2e8f0;
+                 width: 200px; flex-shrink: 0; }
+    .feat-bars { flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 150px; }
     .feat-bar-row { display: flex; align-items: center; gap: 0.5rem; }
     .feat-label { font-size: 0.7rem; color: #718096; width: 60px; }
     .feat-bar-bg { flex: 1; height: 8px; background: #2d3748; border-radius: 4px; }
     .feat-bar-fill-h { height: 100%; border-radius: 4px; background: #63b3ed; }
     .feat-bar-fill-ml { height: 100%; border-radius: 4px; background: #9f7aea; }
     .feat-val { font-size: 0.75rem; color: #a0aec0; width: 35px; text-align: right; }
-    .legend { display: flex; gap: 1.5rem; margin-bottom: 1rem; }
+    .legend { display: flex; gap: 1.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
     .legend-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; color: #a0aec0; }
-    .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
     .unavailable { color: #4a5568; font-size: 0.85rem; padding: 1rem;
                    background: #1a1d27; border: 1px dashed #2d3748; border-radius: 6px; }
+
+    /* â”€â”€ TABLET â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    @media (max-width: 900px) {
+      .container { padding: 1.25rem; }
+      nav { padding: 0.75rem 1.25rem; gap: 1.25rem; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .feat-name { width: 150px; }
+    }
+
+    /* â”€â”€ MOBILE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    @media (max-width: 600px) {
+      nav { padding: 0.75rem 1rem; gap: 0.75rem; }
+      nav h1 { font-size: 1.05rem; }
+      nav a { font-size: 0.8rem; }
+      .container { padding: 0.75rem; }
+      .stats { grid-template-columns: repeat(2, 1fr); gap: 0.6rem; }
+      .stat-card { padding: 0.85rem; }
+      .stat-card .number { font-size: 1.4rem; }
+      .stat-card .label { font-size: 0.72rem; }
+      .section { padding: 1rem 0.75rem; }
+      .section h2 { font-size: 0.9rem; }
+      table { font-size: 0.78rem; min-width: 380px; }
+      th, td { padding: 0.4rem 0.5rem; }
+      .finding-box { padding: 1rem; }
+      .finding-box p { font-size: 0.8rem; }
+      .feat-name { width: 100%; font-size: 0.75rem; margin-bottom: 0.25rem; }
+      .feat-row { flex-direction: column; align-items: flex-start; }
+    }
+
+    /* â”€â”€ VERY SMALL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    @media (max-width: 400px) {
+      nav h1 { font-size: 0.9rem; }
+      .stats { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+      .stat-card .number { font-size: 1.2rem; }
+    }
   </style>
 </head>
 <body>
   <nav>
-    <h1>🛡️ FlakyGuard</h1>
+    <h1>ðŸ›¡ï¸ FlakyGuard</h1>
     <a href="/">Dashboard</a>
     <a href="/ml" class="active">ML Comparison</a>
     <a href="/bisect">Bisector</a>
+    <a href="/analyze">Analyze</a>
   </nav>
 
   <div class="container">
-
-    <!-- Summary stats -->
     <div class="stats">
       <div class="stat-card">
         <div class="number">{{ comparison|length }}</div>
@@ -96,19 +129,17 @@
       </div>
     </div>
 
-    <!-- Key finding -->
     <div class="finding-box">
-      <h3>🔬 Convergent Validity Finding</h3>
+      <h3>ðŸ”¬ Convergent Validity Finding</h3>
       <p>The Random Forest model independently learned that <strong>same_commit_inconsistency</strong>
       is the most important signal (importance: 0.487), followed by <strong>fail_rate</strong> (0.361)
-      — the exact same priority ranking manually designed into the heuristic scorer.
+      â€” the exact same priority ranking manually designed into the heuristic scorer.
       Two independent methods agreeing on signal importance provides strong validation that
       these features genuinely capture flaky-test behavior.</p>
     </div>
 
-    <!-- Side by side comparison table -->
     <div class="section">
-      <h2>📊 Side-by-Side: Heuristic vs ML Score (all tests)</h2>
+      <h2>ðŸ“Š Side-by-Side: Heuristic vs ML Score (all tests)</h2>
       <div class="legend">
         <div class="legend-item"><div class="legend-dot" style="background:#63b3ed;"></div> Heuristic score</div>
         <div class="legend-item"><div class="legend-dot" style="background:#9f7aea;"></div> ML score</div>
@@ -118,9 +149,9 @@
         <thead>
           <tr>
             <th>Test</th>
-            <th>Heuristic score</th>
-            <th>ML score</th>
-            <th>Heuristic flag</th>
+            <th>Heuristic</th>
+            <th>ML</th>
+            <th>H. flag</th>
             <th>ML flag</th>
             <th>Agreement</th>
           </tr>
@@ -154,23 +185,23 @@
             </td>
             <td>
               {% if r.heuristic_flag %}
-                <span class="badge badge-red">⚑ flagged</span>
+                <span class="badge badge-red">âš‘ flagged</span>
               {% else %}
                 <span class="badge badge-gray">clear</span>
               {% endif %}
             </td>
             <td>
               {% if r.ml_flag %}
-                <span class="badge badge-red">⚑ flagged</span>
+                <span class="badge badge-red">âš‘ flagged</span>
               {% else %}
                 <span class="badge badge-gray">clear</span>
               {% endif %}
             </td>
             <td>
               {% if r.agreement == "agree" %}
-                <span class="badge badge-agree">✅ agree</span>
+                <span class="badge badge-agree">âœ… agree</span>
               {% else %}
-                <span class="badge badge-disagree">⚠ disagree</span>
+                <span class="badge badge-disagree">âš  disagree</span>
               {% endif %}
             </td>
           </tr>
@@ -182,9 +213,8 @@
       {% endif %}
     </div>
 
-    <!-- Feature importance comparison -->
     <div class="section">
-      <h2>🧠 Feature Importances — What Each Model Relies On</h2>
+      <h2>ðŸ§  Feature Importances â€” What Each Model Relies On</h2>
       <div class="legend" style="margin-bottom:1.25rem;">
         <div class="legend-item"><div class="legend-dot" style="background:#63b3ed;"></div> Heuristic weight (manually designed)</div>
         <div class="legend-item"><div class="legend-dot" style="background:#9f7aea;"></div> ML importance (independently learned)</div>
@@ -211,7 +241,7 @@
       </div>
       {% endfor %}
     </div>
-
   </div>
 </body>
 </html>
+
