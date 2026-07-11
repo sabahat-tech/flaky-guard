@@ -56,7 +56,6 @@
     .test-name { font-family: monospace; font-size: 0.8rem; color: #90cdf4; word-break: break-all; }
     .classname { font-family: monospace; font-size: 0.75rem; color: #718096; word-break: break-all; }
 
-    /* â”€â”€ TABLET (max 900px) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     @media (max-width: 900px) {
       .container { padding: 1.25rem; }
       .stats { grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
@@ -65,7 +64,6 @@
       nav { padding: 0.75rem 1.25rem; gap: 1.25rem; }
     }
 
-    /* â”€â”€ MOBILE (max 600px) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     @media (max-width: 600px) {
       nav { padding: 0.75rem 1rem; gap: 0.75rem; }
       nav h1 { font-size: 1.05rem; }
@@ -80,24 +78,21 @@
       .section h2 { font-size: 0.9rem; }
       table { font-size: 0.78rem; min-width: 380px; }
       th, td { padding: 0.4rem 0.5rem; }
-      /* hide classname column on mobile to save space */
       th:nth-child(2), td:nth-child(2) { display: none; }
     }
 
-    /* â”€â”€ VERY SMALL (max 400px) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     @media (max-width: 400px) {
       nav { gap: 0.5rem; }
       nav h1 { font-size: 0.95rem; }
       .stat-card .number { font-size: 1.3rem; }
       table { font-size: 0.72rem; min-width: 300px; }
-      /* hide runs column too on very small screens */
       th:last-child, td:last-child { display: none; }
     }
   </style>
 </head>
 <body>
   <nav>
-    <h1>ðŸ›¡ï¸ FlakyGuard</h1>
+    <h1>&#x1F6E1;&#xFE0F; FlakyGuard</h1>
     <a href="/" class="active">Dashboard</a>
     <a href="/ml">ML Comparison</a>
     <a href="/bisect">Bisector</a>
@@ -121,7 +116,7 @@
     </div>
 
     <div class="section">
-      <h2>ðŸš¨ Quarantine List â€” Likely Flaky Tests (score â‰¥ {{ threshold }})</h2>
+      <h2>&#x1F6A8; Quarantine List &mdash; Likely Flaky Tests (score &ge; {{ threshold }})</h2>
       {% if flagged %}
       <table>
         <thead>
@@ -168,7 +163,7 @@
     </div>
 
     <div class="section">
-      <h2>ðŸ“Š All Tests â€” Ranked by Flakiness Score (top 50)</h2>
+      <h2>&#x1F4CA; All Tests &mdash; Ranked by Flakiness Score (top 50)</h2>
       <table>
         <thead>
           <tr>
@@ -204,4 +199,3 @@
   </div>
 </body>
 </html>
-

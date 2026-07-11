@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FlakyGuard â€” ML Comparison</title>
+  <title>FlakyGuard &mdash; ML Comparison</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -62,7 +62,6 @@
     .unavailable { color: #4a5568; font-size: 0.85rem; padding: 1rem;
                    background: #1a1d27; border: 1px dashed #2d3748; border-radius: 6px; }
 
-    /* â”€â”€ TABLET â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     @media (max-width: 900px) {
       .container { padding: 1.25rem; }
       nav { padding: 0.75rem 1.25rem; gap: 1.25rem; }
@@ -70,7 +69,6 @@
       .feat-name { width: 150px; }
     }
 
-    /* â”€â”€ MOBILE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     @media (max-width: 600px) {
       nav { padding: 0.75rem 1rem; gap: 0.75rem; }
       nav h1 { font-size: 1.05rem; }
@@ -90,7 +88,6 @@
       .feat-row { flex-direction: column; align-items: flex-start; }
     }
 
-    /* â”€â”€ VERY SMALL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     @media (max-width: 400px) {
       nav h1 { font-size: 0.9rem; }
       .stats { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
@@ -100,7 +97,7 @@
 </head>
 <body>
   <nav>
-    <h1>ðŸ›¡ï¸ FlakyGuard</h1>
+    <h1>&#x1F6E1;&#xFE0F; FlakyGuard</h1>
     <a href="/">Dashboard</a>
     <a href="/ml" class="active">ML Comparison</a>
     <a href="/bisect">Bisector</a>
@@ -130,16 +127,16 @@
     </div>
 
     <div class="finding-box">
-      <h3>ðŸ”¬ Convergent Validity Finding</h3>
+      <h3>&#x1F52C; Convergent Validity Finding</h3>
       <p>The Random Forest model independently learned that <strong>same_commit_inconsistency</strong>
       is the most important signal (importance: 0.487), followed by <strong>fail_rate</strong> (0.361)
-      â€” the exact same priority ranking manually designed into the heuristic scorer.
+      &mdash; the exact same priority ranking manually designed into the heuristic scorer.
       Two independent methods agreeing on signal importance provides strong validation that
       these features genuinely capture flaky-test behavior.</p>
     </div>
 
     <div class="section">
-      <h2>ðŸ“Š Side-by-Side: Heuristic vs ML Score (all tests)</h2>
+      <h2>&#x1F4CA; Side-by-Side: Heuristic vs ML Score (all tests)</h2>
       <div class="legend">
         <div class="legend-item"><div class="legend-dot" style="background:#63b3ed;"></div> Heuristic score</div>
         <div class="legend-item"><div class="legend-dot" style="background:#9f7aea;"></div> ML score</div>
@@ -185,23 +182,23 @@
             </td>
             <td>
               {% if r.heuristic_flag %}
-                <span class="badge badge-red">âš‘ flagged</span>
+                <span class="badge badge-red">&#x2691; flagged</span>
               {% else %}
                 <span class="badge badge-gray">clear</span>
               {% endif %}
             </td>
             <td>
               {% if r.ml_flag %}
-                <span class="badge badge-red">âš‘ flagged</span>
+                <span class="badge badge-red">&#x2691; flagged</span>
               {% else %}
                 <span class="badge badge-gray">clear</span>
               {% endif %}
             </td>
             <td>
               {% if r.agreement == "agree" %}
-                <span class="badge badge-agree">âœ… agree</span>
+                <span class="badge badge-agree">&#x2705; agree</span>
               {% else %}
-                <span class="badge badge-disagree">âš  disagree</span>
+                <span class="badge badge-disagree">&#x26A0;&#xFE0F; disagree</span>
               {% endif %}
             </td>
           </tr>
@@ -214,7 +211,7 @@
     </div>
 
     <div class="section">
-      <h2>ðŸ§  Feature Importances â€” What Each Model Relies On</h2>
+      <h2>&#x1F9E0; Feature Importances &mdash; What Each Model Relies On</h2>
       <div class="legend" style="margin-bottom:1.25rem;">
         <div class="legend-item"><div class="legend-dot" style="background:#63b3ed;"></div> Heuristic weight (manually designed)</div>
         <div class="legend-item"><div class="legend-dot" style="background:#9f7aea;"></div> ML importance (independently learned)</div>
@@ -244,4 +241,3 @@
   </div>
 </body>
 </html>
-
