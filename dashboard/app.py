@@ -1,11 +1,14 @@
-"""
+﻿"""
 FlakyGuard Dashboard — Flask backend.
 
-Serves four pages:
+Serves five pages:
   GET /           → main dashboard: ranked flaky tests + quarantine list
   GET /bisect     → bisection history + run a new bisection
   GET /ml         → ML vs heuristic side-by-side comparison
-  POST /api/bisect → trigger a bisection and return results as JSON
+  GET /analyze    → paste-a-repo self-serve flakiness analysis
+  POST /api/bisect       → trigger a bisection and return results as JSON
+  POST /api/analyze-repo → pull last 30 CI runs for a pasted repo, score flakiness
+  POST /api/upload-xml   → score flakiness from manually-uploaded JUnit XML files
 
 Run with:
     python -m dashboard.app
@@ -23,6 +26,10 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from detector import features as feat
 from detector import scorer as sc
 from bisector import bisect_engine as be
+from ingester import github_client as gh
+from ingester import artifact_downloader as dl
+from ingester import test_results as tr
+from ingester import config as ing_config
 
 app = Flask(__name__)
 
@@ -146,6 +153,148 @@ def ml_page():
                            ml_flagged=ml_flagged,
                            threshold=FLAKY_THRESHOLD,
                            feature_importances=feature_importances)
+
+
+ANALYZE_MAX_RUNS = 30
+TEST_ARTIFACT_KEYWORDS = ["test", "junit", "report", "results"]
+
+
+def _looks_like_test_artifact(artifact_name: str) -> bool:
+    name = artifact_name.lower()
+    return any(kw in name for kw in TEST_ARTIFACT_KEYWORDS)
+
+
+def _score_records(records):
+    """Turn a flat list of {test_name, classname, status, duration_s,
+    run_id, commit_sha} dicts into scored, JSON-ready results."""
+    import pandas as pd
+    if not records:
+        return []
+    df = pd.DataFrame(records)
+    df["is_fail"] = df["status"].isin(["failed", "error"]).astype(int)
+    features_df = feat.compute_features(df)
+    scored = sc.score_tests(features_df)
+    return scored.to_dict(orient="records")
+
+
+def _flag(scored_records):
+    return [r for r in scored_records
+            if r.get("evidence_level") == "rerun_observed"
+            and float(r.get("flakiness_score", 0)) >= FLAKY_THRESHOLD]
+
+
+@app.route("/analyze")
+def analyze_page():
+    return render_template("analyze.html")
+
+
+@app.route("/api/analyze-repo", methods=["POST"])
+def api_analyze_repo():
+    data = request.get_json(silent=True) or {}
+    repo = (data.get("repo") or "").strip().strip("/")
+
+    if not repo or len(repo.split("/")) != 2:
+        return jsonify({"error": "Invalid repository format. Use owner/repo-name."}), 400
+
+    try:
+        runs = gh.fetch_workflow_runs(repo, max_runs=ANALYZE_MAX_RUNS)
+    except gh.RateLimitExceeded as e:
+        return jsonify({"error": str(e)})
+    except Exception as e:
+        return jsonify({"error": f"Could not fetch workflow runs for '{repo}': {e}"})
+
+    if not runs:
+        return jsonify({"error": f"No GitHub Actions runs found for '{repo}'."})
+
+    records = []
+    runs_checked = 0
+    runs_with_artifacts = 0
+
+    for run in runs:
+        runs_checked += 1
+        run_id = run["id"]
+        commit_sha = run.get("head_sha")
+
+        try:
+            artifacts = gh.fetch_run_artifacts(repo, run_id)
+        except Exception:
+            continue
+
+        test_artifacts = [a for a in artifacts if _looks_like_test_artifact(a["name"])]
+        if not test_artifacts:
+            continue
+        runs_with_artifacts += 1
+
+        for artifact in test_artifacts:
+            try:
+                extract_path = dl.download_artifact(repo, artifact["id"])
+            except Exception:
+                continue
+            for xml_path in dl.find_junit_xml_files(extract_path):
+                try:
+                    results = tr.parse_junit_xml(xml_path, run_id=run_id, commit_sha=commit_sha)
+                    records.extend(tr.results_to_records(results))
+                except Exception:
+                    continue
+
+    if runs_with_artifacts == 0:
+        return jsonify({
+            "error": f"No downloadable test artifacts found in the last "
+                     f"{runs_checked} CI runs. Your workflow likely doesn't "
+                     f"upload a JUnit XML report yet — see the setup guide below.",
+            "runs_checked": runs_checked,
+        })
+
+    scored_records = _score_records(records)
+    response = {
+        "total_tests": len(scored_records),
+        "runs_checked": runs_checked,
+        "runs_with_artifacts": runs_with_artifacts,
+        "flagged": _flag(scored_records),
+        "results": scored_records,
+    }
+    if not ing_config.GITHUB_TOKEN:
+        response["warning"] = ("Server has no GITHUB_TOKEN configured — results may be "
+                                "incomplete due to GitHub's lower unauthenticated rate limit.")
+    return jsonify(response)
+
+
+@app.route("/api/upload-xml", methods=["POST"])
+def api_upload_xml():
+    files = request.files.getlist("files")
+    if not files:
+        return jsonify({"error": "No files uploaded."}), 400
+
+    records = []
+    parsed_files = 0
+    for i, f in enumerate(files):
+        if not f.filename.lower().endswith(".xml"):
+            continue
+        tmp_path = f"/tmp/flakyguard_upload_{i}_{os.path.basename(f.filename)}"
+        f.save(tmp_path)
+        try:
+            results = tr.parse_junit_xml(tmp_path, run_id=i, commit_sha=f.filename)
+            records.extend(tr.results_to_records(results))
+            parsed_files += 1
+        except Exception:
+            pass
+        finally:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+
+    if not records:
+        return jsonify({"error": "Could not parse any valid JUnit XML from the uploaded files."}), 400
+
+    scored_records = _score_records(records)
+    return jsonify({
+        "total_tests": len(scored_records),
+        "parsed_files": parsed_files,
+        "flagged": _flag(scored_records),
+        "results": scored_records,
+        "warning": ("Uploaded files are treated as independent snapshots — "
+                    "same-commit inconsistency detection needs multiple runs "
+                    "of the same commit, which manual uploads may not provide."),
+    })
 
 
 @app.route("/bisect")
